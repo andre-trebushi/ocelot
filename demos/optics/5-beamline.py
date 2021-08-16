@@ -8,7 +8,6 @@ Created on Thu Feb 11 16:09:20 2021
 
 __author__ = "Andrei Trebushinin"
 
-
 from ocelot.optics.new_wave import *
 from ocelot.gui.dfl_plot import *
 from ocelot.rad.optics_elements import *
@@ -21,6 +20,7 @@ ocelog.setLevel(logging.DEBUG)
 from ocelot.common.ocelog import *
 _logger = logging.getLogger(__name__)
 
+### defining parameters for gaussian beam 
 E_pohoton = 200 #central photon energy [eV]
 kwargs={'xlamds':(h_eV_s * speed_of_light / E_pohoton), #[m] - central wavelength
         'rho':1.0e-4, 
@@ -37,9 +37,10 @@ kwargs={'xlamds':(h_eV_s * speed_of_light / E_pohoton), #[m] - central wavelengt
         'power':1e6,
         }
 
-l_a, l_b = 100, 10
-f = l_a*l_b / (l_a + l_b)
+l_a, l_b = 100, 10 # sholders of the focusing system
+f = l_a*l_b / (l_a + l_b) #lens focal length
 
+### defining optical elements
 MirrorSurface = ImperfectMirrorSurface(hrms=3e-9, angle=10*np.pi/180, plane='x', eid='MirrorSurface')
 Aperture = ApertureRect(lx=4000e-6, ly=4000e-6, eid='Aperture')
 # Aperture = ApertureEllips(ax=4000e-6, ay=2000e-6, eid='Aperture')
@@ -48,18 +49,19 @@ Lens = ThinLens(fx=f, fy=f, eid='Lens')
 FreeSpace_before_lens = FreeSpace(l=l_a - 10, mx=2, my=2, eid='free_space_before_lens')
 FreeSpace_after_aperture = FreeSpace(l=10, eid='free_space_after_aperture')
 FreeSpace_to_the_sample = FreeSpace(l=l_b, mx=0.1, my=0.1, eid='free_space_to_the_sample')
-
+#%%
+### generation Radiation Field Gaussian beam
 dfl = generate_gaussian_dfl(**kwargs);  #Gaussian beam defenition
 # dfl.to_domain('sf')
 plot_dfl(dfl, domains='s', fig_name='Gaussian beam', phase=True)
 # plot_dfl(dfl, domains='k', fig_name='Gaussian beam', phase=True)
 
 #%%
-line = (FreeSpace_before_lens, Aperture, 
+line = (FreeSpace_before_lens, Aperture, # set of optical elements
         FreeSpace_after_aperture, MirrorSurface, Lens, FreeSpace_to_the_sample)
 
 dfl_prop = deepcopy(dfl)
-lat = OpticsLine(line, start=FreeSpace_before_lens, stop=FreeSpace_before_lens)
+lat = OpticsLine(line, start=FreeSpace_before_lens, stop=FreeSpace_before_lens) #defining a beamline lattice  with "start" and "stop" elements for propagation
 dfl_prop = propagate(lat, dfl_prop)                
 plot_dfl(dfl_prop, fig_name='{}'.format(FreeSpace_before_lens.eid), phase=True, domains='sf')
 
